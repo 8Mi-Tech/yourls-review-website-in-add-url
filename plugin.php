@@ -38,118 +38,58 @@ function yourls_review_website_in_add_url_db_tables() {
 
 // 注册激活插件
 yourls_add_action( 'activated_yourls-review-website-in-add-url/plugin.php', 'yourls_review_website_in_add_url_db_tables' );
+// 添加插件hook，监听add link事件
+yourls_add_action('pre_add_url', 'review_website_in_add_url');
 
-// 检查URL是否在白名单或黑名单
-function yourls_review_website_in_add_url ($url) {
- // 定义白名单和黑名单
- $custom_blacklist = yourls_get_custom_blacklist();
- $custom_whitelist = yourls_get_custom_whitelist();
- $system_blacklist = yourls_get_system_blacklist();
- $system_whitelist = yourls_get_system_whitelist();
- 
- // 检查URL
- if (in_array($url, $custom_blacklist) || in_array($url, $system_blacklist)) {
-  // 如果URL在黑名单，禁止生成短连接
-  return false;
- }
- elseif (in_array($url, $custom_whitelist) || in_array($url, $system_whitelist)) {
-  // 如果URL在白名单，允许生成短链接
-  return true;
- }
- else {
-  // 检查URL是否有暴力，色情，成人内容，六合彩，赌博等违法元素
-  $check_result = yourls_review_website_in_add_url_check($url);
-  
-  if ($check_result == 1) {
-   // 如果有违法元素，自动加入system_blacklist，禁止生成短连接
-   yourls_add_system_blacklist($url);
-   return false;
-  }
-  elseif ($check_result == 0) {
-   // 如果没有违法元素，自动加入system_whitelist，允许生成短链接
-   yourls_add_system_whitelist($url);
-   return true;
-  }
- }
+// 定义插件函数
+function review_website_in_add_url($args) {
+    global $yourls_db;
+	
+	// 定义黑白名单数组
+    $blacklist = array("custom_blacklist", "system_blacklist");
+    $whitelist = array("custom_whitelist", "system_whitelist");
+
+    // 获取传入的链接参数
+    $url = $args[0];
+
+    // 查询黑白名单
+    foreach ($blacklist as $bl) {
+        $sql = "SELECT * FROM $bl WHERE url = '$url'";
+        $check_blacklist = $yourls_db->get_results($sql);
+        if (!empty($check_blacklist)) {
+            // 如果在黑名单中，则禁止生成短连接
+            die("禁止生成短连接!");
+        }
+    }
+
+    foreach ($whitelist as $wl) {
+        $sql = "SELECT * FROM $wl WHERE url = '$url'";
+        $check_whitelist = $yourls_db->get_results($sql);
+        if (!empty($check_whitelist)) {
+            // 如果在白名单中，则允许生成短连接
+            return;
+        }
+    }
+
+    // 检查网站是否有色情、成人内容、六合彩、赌博等违法元素
+    // TODO: 此处应该实现对网站内容的检查
+    $check_result = check_url($url);
+    if ($check_result) {
+        // 如果有违法元素，则自动加入system_blacklist，并禁止生成短链接
+        $sql = "INSERT INTO system_blacklist (url) VALUES ('$url')";
+        $yourls_db->query($sql);
+        die("禁止生成短连接!");
+    } else {
+        // 如果没有违法元素，则自动加入system_whitelist，并允许生成短链接
+        $sql = "INSERT INTO system_whitelist (url) VALUES ('$url')";
+        $yourls_db->query($sql);
+        return;
+    }
+
 }
 
-// 检查URL是否有暴力，色情，成人内容，六合彩，赌博等违法元素
-function yourls_review_website_in_add_url_check($url) {
- // 检查URL
- $result = yourls_check_url_contents($url);
- 
- if ($result == 1) {
-  // 如果有违法元素，返回1
-  return 1;
- }
- else {
-  // 如果没有违法元素，返回0
-  return 0;
- }
+// 定义检查网站是否有违法元素的函数
+function check_url($url) {
+    // TODO: 此处应该实现对网站内容的检查
+    return false;
 }
-
-// 添加URL到黑名单
-function yourls_add_system_blacklist($url) {
- global $ydb;
- $sql = "INSERT INTO `".YOURLS_DB_PREFIX."system_blacklist` (`url`) VALUES ('$url');";
- $ydb->query($sql);
-}
-
-// 添加URL到白名单
-function yourls_add_system_whitelist($url) {
- global $ydb;
- $sql = "INSERT INTO `".YOURLS_DB_PREFIX."system_whitelist` (`url`) VALUES ('$url');";
- $ydb->query($sql);
-}
-
-// 获取用户自定义黑名单
-function yourls_get_custom_blacklist() {
- global $ydb;
- $sql = "SELECT url FROM `".YOURLS_DB_PREFIX."custom_blacklist`;";
- $results = $ydb->get_results($sql);
- $blacklist = array();
- foreach ($results as $result) {
-  array_push($blacklist, $result->url);
- }
- return $blacklist;
-}
-
-// 获取用户自定义白名单
-function yourls_get_custom_whitelist() {
- global $ydb;
- $sql = "SELECT url FROM `".YOURLS_DB_PREFIX."custom_whitelist`;";
- $results = $ydb->get_results($sql);
- $whitelist = array();
- foreach ($results as $result) {
-  array_push($whitelist, $result->url);
- }
- return $whitelist;
-}
-
-// 获取系统黑名单
-function yourls_get_system_blacklist() {
- global $ydb;
- $sql = "SELECT url FROM `".YOURLS_DB_PREFIX."system_blacklist`;";
- $results = $ydb->get_results($sql);
- $blacklist = array();
- foreach ($results as $result) {
-  array_push($blacklist, $result->url);
- }
- return $blacklist;
-}
-
-// 获取系统白名单
-function yourls_get_system_whitelist() {
- global $ydb;
- $sql = "SELECT url FROM `".YOURLS_DB_PREFIX."system_whitelist`;";
- $results = $ydb->get_results($sql);
- $whitelist = array();
- foreach ($results as $result) {
-  array_push($whitelist, $result->url);
- }
- return $whitelist;
-}
-
-// 注册插件到action
-yourls_add_action( 'pre_add_url', 'yourls_review_website_in_add_url' );
-?>
