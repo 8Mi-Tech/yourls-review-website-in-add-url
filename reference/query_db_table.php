@@ -15,5 +15,5 @@ function query_db_table($table_name){
 }
 
 // 使用函数
-#$blacklist_urls = query_db_table("reviewurl_system_blacklist_url");
+// $blacklist_urls = query_db_table("reviewurl_system_blacklist_url");
 ?>

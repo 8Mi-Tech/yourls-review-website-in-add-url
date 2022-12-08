@@ -1,0 +1,21 @@
+你好，帮我写一个YOURLS的插件
+插件名称叫：yourls-review-website-in-add-url
+功能：在YOURLS添加链接前先检测添加的地址在哪个名单
+如果在黑名单 reviewurl_custom_blacklist_url和reviewurl_system_blacklist_url 则禁止生成短连接
+如果在白名单 reviewurl_custom_whitelist_url和reviewurl_system_whitelist_url 则允许生成短地址
+如果都不在 那就检测网站是否有 色情 成人内容 六合彩 赌博 等违法元素
+如果有则自动加入reviewurl_system_blacklist_url 并且禁止生成短链接
+如果没有则自动加入reviewurl_system_whitelist_url 并且允许生成短链接
+这个插件有4个表 连接到数据库 分别叫
+reviewurl_system_blacklist_url 对应 插件自动添加域名或连接黑名单的地方
+reviewurl_system_whitelist_url 对应 插件自动添加域名或链接白名单的地方
+reviewurl_custom_blacklist_url 对应 用户手动添加链接或者域名的黑名单
+reviewurl_custom_whitelist_url 对应 用户手动添加链接或者域名的白名单
+
+reviewurl_custom_blacklist_url 和 reviewurl_custom_whitelist_url 都能被YOURLS的管理页面直接编辑！
+reviewurl_system_blacklist_url 和 reviewurl_system_whitelist_url 在YOURLS管理页面只能选择删除！
+查询数据库只能用一个function以及一个参数 比如 function query_db()
+在查询的时候只需类似 query db ("reviewurl_system_blacklist_url") 这样的
+并且同时查询同类型 以白名单和黑名单两种类型
+注意一个细节 白名单和黑名单在读取的时候并不区分是系统还是用户手动 只在管理页后台添加的时候区分
+如上要求 帮我生成PHP代码 并且代码注释要求是中文的！ 而且代码还不能过长 谢谢！
